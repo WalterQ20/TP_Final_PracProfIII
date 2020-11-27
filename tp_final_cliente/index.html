@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> <!--CDN Para JS-->
+        <title>App de Monitoreo</title>
+    </head>
+    <body>
+        <div class="col s12" style="text-align: center">
+            <nav class="nav-extended">
+                <div class="nav-wrapper green">
+                <a class="brand-logo">App de Monitoreo</a>
+                </div>
+            </nav>
+        </div>
+        
+        <div id="monitoreo">
+            <div class="row">
+                <div class="col s12">
+                <ul class="tabs">
+                    <li class="tab col s4"><a href="#Ind">Indicadores</a></li>
+                    <li class="tab col s4"><a href="#dirIp">Direcciones IP</a></li>
+                    <li class="tab col s4"><a href="#Clients">Clientes</a></li>
+                </ul>
+                </div>
+                <div id="Ind">
+                    <div class="col s12" style="text-align: center">
+                        <div class="card-panel"> 
+                            <div class="row">
+                                <div class="input-field col s3">
+                                    <select @change="Servers($event.target.value)" v-model="select_srv" class="browser-default">
+                                        <option value="" disabled selected><b>Dirección IP</b></option>
+                                        <option :value="eqs.dir_ip" v-for="eqs of lista_Equipos">{{<b>eqs.hostname</b>}}</option> 
+                                    </select>
+                                </div>
+                            </div>
+                        </div> <!--Fin Card IP-->
+
+                        <div class="col s4">
+                                <div class="card-panel">
+                                    <div class="row">
+                                        <div class="row">
+                                            <p>CPU Free %</p>
+                                        </div>
+                                        <div class="row">
+                                            <span class="card-title">{{valor_cpu}} %</span>
+                                            <p><b>{{estado_cpu}}</b></p>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div> <!--Fin Card CPU-->
+
+                        <div class="col s4">    
+                                <div class="card-panel">
+                                    <div class="row">
+                                        <p>Uso RAM</p>
+                                    </div>
+            
+                                    <div class="row">
+                                        <p>{{ram_io}}</p>
+                                        <p><b>{{estado_ram}}</b></p>
+                                    </div>
+                                </div>
+                        </div><!--Fin Card Memoria-->
+
+                        <div class="col s4">
+                                <div class="card-panel">
+                                    <div class="row">
+                                        <div class="row">
+                                            <p>Trafico de la Red</p>
+                                        </div>
+                                        <div class="row">
+                                            <p><b>Entrada:</b> {{red_io_en}} Kb/s</p>
+                                            <p><b>Salida:</b> {{red_io_out}} Kb/s</p>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div><!--Fin Card Trafico Red-->
+                    </div>
+
+                    <div class="col s12">
+                        <div class="card-panel">
+                            <div class="row" style="text-align: center">Grafico en Tiempo Real Servidor</div>
+                            <div id="container"></div>
+                        </div><!--Fin card Grafico-->
+                    </div> 
+                </div><!--Fin Solapa Indicadores-->
+
+                <div id="dirIp">
+                    <div class="col s6">
+                        <table style="text-align: center"> <!--Tabla con los datos de la BBDD-->
+                            <tr>
+                                <th>Hostname</th>
+                                <th>IP</th>
+                                <th>Actions</th> 
+                            </tr>
+                            <tr v-for="ip of lista_Equipos">
+                                <td>{{ip.hostname}}</td>
+                                <td>{{ip.dir_ip}}</td>
+                                <td>
+                                    <a v-on:click="editarEquipos(ip.id_host,ip.hostname,ip.dir_ip,ip.fecha_carga,ip.cliente)" class="btn-floating btn-small waves-effect waves-light blue"><i class="tiny material-icons">create</i></a>
+                                    <a v-on:click="eliminarEqps(ip.id_host)" class="btn-floating btn-small waves-effect waves-light red"><i class="tiny material-icons">delete_forever</i></a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div> <!--Fin listado de datos-->
+
+                    <div class="input-field col s4">
+                        <input v-model="hostname" type="text" placeholder="hostname">
+                        <input v-model="dir_ip" type="text" placeholder="IP">
+                        <input v-model="fecha_carga" type="date">
+                        <select v-model="list_select" class="browser-default">
+                            <option value="" disabled selected><b>Id Clientes</b></option>
+                            <option v-for="cli of lista_Clientes">{{cli.id_cliente}}</option>
+                        </select>
+
+                        <button v-on:click="guardarEquipos()" class="btn waves-effect waves-light">GUARDAR</button>
+                        <button v-on:click="actualizarEquipos()" class="btn waves-effect waves-light">ACTUALIZAR</button>
+                    </div> <!--Fin ingreso de datos--> 
+                </div><!--Fin Solapa Direcciones IP-->
+
+                <div id="Clients" class="col s12">
+                    <div class="col s6">
+                        <table style="text-align: center"> <!--Tabla con los datos de la BBDD-->
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Actions</th> 
+                            </tr>
+                            <tr v-for="cl of lista_Clientes">
+                                <td>{{cl.nombre}}</td>
+                                <td>{{cl.apellido}}</td>
+                                <td>
+                                    <a v-on:click="editarClient(cl.id_cliente,cl.razon_social,cl.nombre,cl.apellido,cl.correo_electronico,cl.telefono,)" class="btn-floating btn-small waves-effect waves-light blue"><i class="tiny material-icons">create</i></a>
+                                    <a v-on:click="eliminarClient(cl.id_cliente)" class="btn-floating btn-small waves-effect waves-light red"><i class="tiny material-icons">delete_forever</i></a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div> <!--Fin listado de datos-->
+
+                    <div class="input-field col s4">
+                        <input v-model="razon_social" type="text" placeholder="Razon Social">
+                        <input v-model="nombre" class="col s6" type="text" placeholder="Nombre">
+                        <input v-model="apellido" class="col s6" type="text" placeholder="Apellido">
+                        <input v-model="correo_electronico" type="text" placeholder="Correo">
+                        <input v-model="telefono" type="text" placeholder="Telefono">
+
+                        <button v-on:click="guardarCliente()" class="btn waves-effect waves-light">GUARDAR</button>
+                        <button v-on:click="actualizarClientes()" class="btn waves-effect waves-light">ACTUALIZAR</button>
+
+                    </div> <!--Fin ingreso de datos-->
+        
+                </div><!--Fin Solapa Clientes-->
+            </div>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.1/socket.io.js"></script>
+        <script src="index.js"></script>
+        <!--Todo lo necesario para el/los graficos-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/modules/export-data.js"></script>
+        <script src="Grafic.js"></script>
+    </body>
+</html>
